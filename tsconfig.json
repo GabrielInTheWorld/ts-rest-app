@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "strict": true,
+    "declaration": true,
+    "baseUrl": ".",
+    "rootDir": "src",
+    "outDir": "dist/esm",
+    "sourceMap": true,
+    "removeComments": true,
+    "experimentalDecorators": true,
+    "target": "ES6",
+    "esModuleInterop": true,
+    "emitDecoratorMetadata": true,
+    "moduleResolution": "node",
+    "importHelpers": true,
+    "strictPropertyInitialization": false,
+    "lib": ["ES2018"],
+    "types": ["node"],
+    "typeRoots": ["node_modules/@types"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"]
+}
