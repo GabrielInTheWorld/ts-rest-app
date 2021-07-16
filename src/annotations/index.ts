@@ -23,7 +23,7 @@ export interface RestApplicationConfig {
 type HttpMethod = 'get' | 'post' | 'put' | 'delete' | 'all';
 
 export interface RequestMappingConfig {
-  method: HttpMethod;
+  method?: HttpMethod;
 }
 
 export interface RestControllerConfig {
@@ -31,22 +31,34 @@ export interface RestControllerConfig {
   prefix?: string;
 }
 
+interface RequestDefinition {
+  path: string;
+  config: RequestMappingConfig;
+  onRequestFn: (body: any, params: any) => any;
+}
+
+const requestControllerMap: { [controllerName: string]: RequestDefinition[] } = {};
+
 const defaultConfig: RequestMappingConfig = {
   method: 'get'
 };
-export function OnRequest(path?: string, config: RequestMappingConfig = defaultConfig): any {
+export function OnRequest(path?: string, config: RequestMappingConfig = {}): any {
   console.log('called RequestMapping with', path, config);
   return (target: ConstructorType, propertyKey: string, descriptor: PropertyDescriptor) => {
     console.log('target:', target, target.name, target.prototype, target.constructor?.name);
-    // const controller = Container.getInstance().getService(target.name) as any;
-    const app: express.Application = Container.getInstance().getService({ name: INJECTION_TOKEN, useValue: express() });
-    const routePath = path || `/${propertyKey}`;
-    app[config.method](routePath, (req, res) => {
-      const params = req.params;
-      const body = req.body;
-      const response = descriptor.value(body, params);
-      res.json(response);
-    });
+    path = propertyKey === 'index' ? '/' : path;
+    path = path ?? `/${propertyKey}`;
+
+    const requestDefinition = {
+      path,
+      config,
+      onRequestFn: (body: any, params: any) => descriptor.value(body, params)
+    };
+    if (requestControllerMap[target.constructor?.name]) {
+      requestControllerMap[target.constructor.name].push(requestDefinition);
+    } else {
+      requestControllerMap[target.constructor.name] = [requestDefinition];
+    }
   };
 }
 
@@ -73,15 +85,34 @@ export function OnAll(path: string, config: RequestMappingConfig): any {
 export function RestController(config: RestControllerConfig = {}): any {
   console.log('called rest-controller', config);
   return (target: ConstructorType, ...args: any[]) => {
-    console.log('args:', target, args, Object.keys(target));
+    console.log('args:', target, target.prototype, target.name, args, Object.keys(target));
     for (const key in target) {
       console.log('target has key:', key, (target as any)[key]);
     }
     const defaultMethod = config.defaultMethod || 'get';
+    const app = Container.getInstance().getService<express.Application>(INJECTION_TOKEN);
     (target as any).defaultMethod = defaultMethod;
-    (target as any).app = Container.getInstance().getService(INJECTION_TOKEN);
+    (target as any).app = app;
     Container.getInstance().register<RestControllerInjecting>(target, target);
+    const requestMethods = requestControllerMap[target.name] || [];
+    for (const method of requestMethods) {
+      method.config.method = method.config.method ?? defaultMethod;
+      console.log('defaultMethod', defaultMethod);
+      method.path = config.prefix
+        ? `/${config.prefix}/${method.path.startsWith('/') ? method.path.slice(1) : method.path}`
+        : method.path;
+      onConstructRequest(app, method);
+    }
   };
+}
+
+function onConstructRequest(app: express.Application, definition: RequestDefinition): void {
+  app[definition.config.method!](definition.path, (req, res) => {
+    const params = req.params;
+    const body = req.body;
+    const returnValue = definition.onRequestFn(body, params);
+    res.json(returnValue);
+  });
 }
 
 export class RestApplication {

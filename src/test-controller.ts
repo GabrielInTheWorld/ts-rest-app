@@ -1,6 +1,8 @@
 import { OnRequest, RestController } from './annotations';
 
-@RestController()
+@RestController({
+  defaultMethod: 'post'
+})
 export class TestController {
   @OnRequest()
   public index(): string {

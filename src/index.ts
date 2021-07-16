@@ -1,8 +1,12 @@
 // import express from 'express';
 import { RestApplication } from './annotations';
+import { Inject } from './example';
+import { TestClass, TestInterface } from './test-class';
 import { TestController } from './test-controller';
 
 class Server {
+  @Inject(TestClass)
+  private test: TestInterface;
   // public static readonly PORT = 3000;
 
   // private app = express();

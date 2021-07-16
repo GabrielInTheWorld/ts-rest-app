@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { InjectionToken } from '../decorators/utils';
 
 import { Type } from '../decorators';
+import { hasOnInit } from '../interfaces/oninit';
 
 function isType<T>(toCheck: InjectionToken<T>): toCheck is Type<T> {
   return !toCheck.hasOwnProperty('useValue');
@@ -46,6 +47,9 @@ export class Container {
       }
       this.serviceRegistry.set(dependency.name, provider);
     }
+    if (hasOnInit(provider)) {
+      provider.onInit();
+    }
     return provider;
   }
 
@@ -53,7 +57,11 @@ export class Container {
     if (isType(provider)) {
       const tokens = Reflect.getMetadataKeys(provider.prototype, 'property');
       const injections = tokens.map((token: any) => this.get(token));
-      return new provider(...injections, ...input);
+      const instance = new provider(...injections, ...input);
+      if (hasOnInit(instance)) {
+        instance.onInit();
+      }
+      return instance;
     }
     if (provider.useValue) {
       return provider.useValue;
