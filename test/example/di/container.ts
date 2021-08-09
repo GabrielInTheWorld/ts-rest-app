@@ -42,6 +42,9 @@ export class Container {
         provider = new dependency(...injections);
       } else if (dependency.useValue) {
         provider = dependency.useValue;
+        if (dependency.afterInit) {
+          dependency.afterInit(provider);
+        }
       } else {
         throw new Error(`No provider for key ${dependency.name}`);
       }

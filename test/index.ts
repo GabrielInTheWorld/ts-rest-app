@@ -1,5 +1,5 @@
 // import express from 'express';
-import { RestApplication } from './annotations';
+import { RestApplication } from '../src/annotations';
 import { Inject } from './example';
 import { TestClass, TestInterface } from './test-class';
 import { TestController } from './test-controller';

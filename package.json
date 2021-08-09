@@ -1,13 +1,12 @@
 {
   "name": "rest-app",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "An application to build easily a web application",
   "main": "dist/cjs/index.js",
   "types": "dist/esm/index.d.ts",
   "module": "dist/esm/index.js",
   "scripts": {
-    "start": "nodemon src/index.ts",
-    "postinstall": "npm run uptodate",
+    "start": "nodemon test/index.ts",
     "test": "jest --passWithNoTests --detectOpenHandles",
     "cleanup": "npm run prettify-write && npm run linter-write",
     "linter-write": "tslint --fix -c ./tslint.json 'src/**/*{.ts,.tsx}'",
@@ -24,7 +23,7 @@
   "license": "MIT",
   "dependencies": {
     "express": "^4.17.1",
-    "final-di": "^1.0.3",
+    "final-di": "^1.0.6",
     "reflect-metadata": "^0.1.13",
     "tslib": "^2.2.0"
   },
