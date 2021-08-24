@@ -46,25 +46,30 @@ function catchError(res: Response, e: unknown): void {
   }
 }
 
+function initExpressApplication(): express.Application {
+  let app: express.Application;
+  try {
+    app = Container.getInstance().getService<express.Application>(INJECTION_TOKEN);
+  } catch (e) {
+    app = express();
+    const injectionToken = {
+      name: INJECTION_TOKEN,
+      useValue: app,
+      afterInit: (app: express.Application) => {
+        app.use(express.json());
+        app.use(express.urlencoded({ extended: true }));
+        app.use(RestApplication.handleRequest);
+      }
+    };
+    Container.getInstance().register(injectionToken, injectionToken as any);
+  }
+  return app;
+}
+
 export function RestController(config: RestControllerConfig = {}): any {
   return (target: ConstructorType, ...args: any[]) => {
     const defaultMethod = config.defaultMethod || 'get';
-    let app: express.Application;
-    try {
-      app = Container.getInstance().getService<express.Application>(INJECTION_TOKEN);
-    } catch (e) {
-      app = express();
-      const injectionToken = {
-        name: INJECTION_TOKEN,
-        useValue: app,
-        afterInit: (app: express.Application) => {
-          app.use(express.json());
-          app.use(express.urlencoded({ extended: true }));
-          app.use(RestApplication.handleRequest);
-        }
-      };
-      Container.getInstance().register(injectionToken, injectionToken as any);
-    }
+    const app: express.Application = initExpressApplication();
     (target as any).defaultMethod = defaultMethod;
     (target as any).app = app;
     Container.getInstance().register<RestControllerInjecting>(target, target);
