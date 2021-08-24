@@ -5,6 +5,7 @@ export function OnRequest(path?: string, config: RequestMappingConfig = {}): any
   return (target: ConstructorType, propertyKey: string, descriptor: PropertyDescriptor) => {
     path = propertyKey === 'index' ? '/' : path;
     path = path ?? `/${propertyKey}`;
+    path = path.startsWith('/') ? path : `/${path}`;
 
     const requestDefinition = {
       path,

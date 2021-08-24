@@ -1,8 +1,9 @@
-import express from 'express';
+import express, { Response } from 'express';
 import { Container } from 'final-di';
 import { RestApplication } from '../classes';
 
 import { ConstructorType, HttpMethod, INJECTION_TOKEN, RestControllerInjecting } from '../util';
+import { BaseError, RoutingError } from '../exceptions';
 
 export const requestControllerMap: { [controllerName: string]: RequestDefinition[] } = {};
 
@@ -25,9 +26,24 @@ function onConstructRequest(app: express.Application, definition: RequestDefinit
   app[definition.config.method!](definition.path, (req, res) => {
     const params = req.params;
     const body = req.body;
-    const returnValue = definition.onRequestFn(body, params);
-    res.json(returnValue);
+    try {
+      res.json(definition.onRequestFn(body, params));
+    } catch (e: unknown) {
+      catchError(res, e);
+    }
   });
+}
+
+function catchError(res: Response, e: unknown): void {
+  console.log('Stacktrace:\r\n', e);
+  if (e instanceof RoutingError) {
+    res.status(e.statusCode).json({ message: e.message ?? 'URL not found' });
+  } else if (e instanceof BaseError) {
+    res.status(e.statusCode).json({ message: e.message ?? 'Action could not be addressed' });
+  } else {
+    const message = (e as any).toString() ?? 'Action handling failured';
+    res.status(500).json({ message });
+  }
 }
 
 export function RestController(config: RestControllerConfig = {}): any {
