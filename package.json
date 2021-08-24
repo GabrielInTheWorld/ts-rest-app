@@ -1,6 +1,6 @@
 {
   "name": "rest-app",
-  "version": "0.0.3",
+  "version": "1.0.0-alpha.1",
   "description": "An application to build easily a web application",
   "main": "dist/cjs/index.js",
   "types": "dist/esm/index.d.ts",
