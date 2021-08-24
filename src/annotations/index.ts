@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { Container, Inject } from 'final-di';
 
 const INJECTION_TOKEN = 'express.Application';
@@ -14,11 +14,14 @@ interface RestControllerInjecting<T = any> extends ConstructorType<T> {
   defaultMethod: HttpMethod;
 }
 
+type RequestHandlerFn = (req: Request, res?: Response) => void;
+
 export interface RestApplicationConfig {
   controllers: ConstructorType[];
   port?: number;
   shouldImmediatelyStart?: boolean;
   name?: string;
+  requestHandlers?: RequestHandlerFn[];
 }
 
 type HttpMethod = 'get' | 'post' | 'put' | 'delete' | 'all';
@@ -39,10 +42,6 @@ interface RequestDefinition {
 }
 
 const requestControllerMap: { [controllerName: string]: RequestDefinition[] } = {};
-
-// const defaultConfig: RequestMappingConfig = {
-//   method: 'get'
-// };
 
 export function OnRequest(path?: string, config: RequestMappingConfig = {}): any {
   // console.log('called RequestMapping with', path, config);
@@ -85,7 +84,7 @@ export function OnAll(path?: string, config: RequestMappingConfig = {}): any {
 }
 
 export function RestController(config: RestControllerConfig = {}): any {
-  // console.log('called rest-controller', config);
+  console.log('called rest-controller', config);
   return (target: ConstructorType, ...args: any[]) => {
     // console.log('args:', target, target.prototype, target.name, args, Object.keys(target));
     // for (const key in target) {
@@ -125,13 +124,16 @@ export class RestApplication {
     afterInit: (app: express.Application) => {
       app.use(express.json());
       app.use(express.urlencoded({ extended: true }));
+      app.use(RestApplication.handleRequest);
     }
   })
   private readonly app: express.Application;
   private config: RestApplicationConfig;
+  private static requestHandlers: RequestHandlerFn[] = [];
 
   public constructor(config: RestApplicationConfig) {
     this.config = config;
+    RestApplication.requestHandlers = config.requestHandlers || [];
     if (config.shouldImmediatelyStart) {
       this.start();
     }
@@ -151,5 +153,10 @@ export class RestApplication {
 
   public getConfig(): Readonly<RestApplicationConfig> {
     return this.config;
+  }
+
+  public static handleRequest(req: Request, res: Response, next: NextFunction): void {
+    RestApplication.requestHandlers.forEach(handler => handler(req, res));
+    next();
   }
 }

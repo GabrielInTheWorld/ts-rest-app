@@ -1,11 +1,16 @@
 import { OnPost, OnRequest, RestController } from '../src/annotations';
 
 @RestController({
-  defaultMethod: 'post'
+  defaultMethod: 'get'
 })
 export class TestController {
+  public constructor() {
+    console.log('TestController');
+  }
+
   @OnRequest()
   public index(): string {
+    console.log('TestController:index');
     return 'Hello World!';
   }
 
