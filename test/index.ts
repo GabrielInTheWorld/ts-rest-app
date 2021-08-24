@@ -1,8 +1,8 @@
-// import express from 'express';
-import { RestApplication } from '../src/annotations';
-import { Inject } from './example';
+import { Inject } from 'final-di';
+
 import { TestClass, TestInterface } from './test-class';
 import { TestController } from './test-controller';
+import { RestApplication } from '../src';
 
 class Server {
   @Inject(TestClass)
