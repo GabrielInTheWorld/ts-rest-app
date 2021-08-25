@@ -8,10 +8,11 @@ export const TYPE_BODY = 'body';
 export const TYPE_COOKIE = 'cookie';
 export const TYPE_PARAM = 'param';
 
-export function Body(): any {
+export function Body(name?: string): any {
   return (target: ConstructorType, propertyKey: string, parameterIndex: number): void => {
-    const bodyReflection = { name: propertyKey, parameterIndex, type: TYPE_BODY };
-    Reflect.defineMetadata(BODY_METADATA_KEY, bodyReflection, target, propertyKey);
+    const existingBodyParams = Reflect.getOwnMetadata(BODY_METADATA_KEY, target, propertyKey) || [];
+    existingBodyParams.push({ name: name, parameterIndex, type: TYPE_BODY });
+    Reflect.defineMetadata(BODY_METADATA_KEY, existingBodyParams, target, propertyKey);
   };
 }
 

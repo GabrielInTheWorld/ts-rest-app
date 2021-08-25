@@ -17,7 +17,7 @@ export class TestController {
   }
 
   @OnPost()
-  public data(@Body() data: any): string {
+  public data(@Body('message') data: any): string {
     console.log('data', data);
     return 'Hello not';
   }

@@ -1,5 +1,5 @@
 import cookieParser from 'cookie-parser';
-import express, { Response } from 'express';
+import express, { Request, Response } from 'express';
 import { Container } from 'final-di';
 import { RestApplication } from '../classes';
 
@@ -25,15 +25,20 @@ export interface RequestDefinition {
 
 function onConstructRequest(app: express.Application, definition: RequestDefinition): void {
   app[definition.config.method!](definition.path, (req, res) => {
-    const params = req.params;
-    const body = req.body;
-    const cookies = req.cookies;
     try {
-      res.json(definition.onRequestFn(body, params, cookies));
+      sendJson(definition, req, res);
     } catch (e: unknown) {
       catchError(res, e);
     }
   });
+}
+
+function sendJson(definition: RequestDefinition, req: Request, res: Response): void {
+  const params = req.params;
+  const body = req.body;
+  const cookies = req.cookies;
+  const result = definition.onRequestFn(body, params, cookies);
+  res.json(result);
 }
 
 function catchError(res: Response, e: unknown): void {

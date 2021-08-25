@@ -22,18 +22,19 @@ interface Usage {
 function getFunctionValue(descriptor: PropertyDescriptor, properties: TargetProperties, options: RequestParams): any {
   const { body, cookies, params } = options;
   const { target, propertyKey } = properties;
-  const useBody: Usage = Reflect.getOwnMetadata(BODY_METADATA_KEY, target, propertyKey);
+  const useBody: Usage[] = Reflect.getOwnMetadata(BODY_METADATA_KEY, target, propertyKey) || [];
   const useParams: Usage[] = Reflect.getOwnMetadata(PARAM_METADATA_KEY, target, propertyKey) || [];
   const useCookies: Usage[] = Reflect.getOwnMetadata(COOKIE_METADATA_KEY, target, propertyKey) || [];
-  const uses: Usage[] = useParams.concat(useCookies);
-  if (useBody) {
-    uses.push(useBody);
-  }
+  const uses: Usage[] = useParams.concat(useCookies).concat(useBody);
   uses.sort((a, b) => a.parameterIndex - b.parameterIndex);
   const functionParams = uses.map(usage => {
     switch (usage.type) {
       case 'body':
-        return body;
+        if (usage.name) {
+          return body[usage.name];
+        } else {
+          return body;
+        }
       case 'cookie':
         return cookies[usage.name];
       case 'param':
