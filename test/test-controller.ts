@@ -1,14 +1,13 @@
 import { Response } from 'express';
 
-import { OnPost, OnRequest, RestController } from '../src/annotations';
+import { OnGet, OnPost, OnRequest, RestController } from '../src/annotations';
 import { Body, Res } from '../src/annotations/parameters';
 import { RoutingError } from '../src/exceptions/routing-error';
 
 import { TestMiddleware } from './test-middleware';
 
 @RestController({
-  defaultMethod: 'get',
-  middleware: [TestMiddleware]
+  defaultMethod: 'get'
 })
 export class TestController {
   public constructor() {
@@ -43,7 +42,7 @@ export class TestController {
     throw new RoutingError('This route is not for your eyes', { statusCode: 403 });
   }
 
-  @OnRequest()
+  @OnRequest('promise', { middleware: [TestMiddleware] })
   public async promise(): Promise<string> {
     return 'A promise is resolved';
   }
@@ -54,12 +53,18 @@ export function Some(target: any, ...props: any[]): any {
 }
 
 @RestController({
-  prefix: 'secure'
+  prefix: 'secure',
+  middleware: [TestMiddleware]
 })
 export class SecureTestController {
   @OnPost()
   public data(@Body() data: any): string {
     console.log('secure data', data);
     return 'Yeah, a secure data route!';
+  }
+
+  @OnGet('test-middleware')
+  public testMiddlewareFn(): string {
+    return 'You have used a middleware for a specific function';
   }
 }

@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express, { Handler, NextFunction, Request, Response } from 'express';
 import { Container } from 'final-di';
 
 import { ConstructorType, HttpMethod, RestControllerInjecting } from '../util';
@@ -11,6 +11,7 @@ export const requestControllerMap: { [controllerName: string]: RequestDefinition
 
 export interface RequestMappingConfig {
   method?: HttpMethod;
+  middleware?: ConstructorType<RestMiddleware>[];
 }
 
 export interface RestControllerConfig {
@@ -26,7 +27,8 @@ export interface RequestDefinition {
 }
 
 function onConstructRequest(app: express.Application, definition: RequestDefinition): void {
-  app[definition.config.method!](definition.path, (req, res) => {
+  const middlewareHandlers = (definition.config.middleware || []).map(middlewareCtor => getMiddleware(middlewareCtor));
+  app[definition.config.method!](definition.path, ...middlewareHandlers, (req, res) => {
     sendJson(definition, req, res).catch(e => catchError(res, e));
   });
 }
@@ -51,13 +53,18 @@ function catchError(res: Response, e: unknown): void {
   }
 }
 
-function applyMiddleware(app: express.Application, middlewareCtors: ConstructorType<RestMiddleware>[]): void {
-  for (const middlewareCtor of middlewareCtors) {
-    const middleware = Container.getInstance().getService(middlewareCtor);
-    app.use((req, res, next) => {
-      middleware.use(req, res, next);
-    });
+function getMiddleware(middlewareCtor: ConstructorType<RestMiddleware>): Handler {
+  const middleware = Container.getInstance().getService(middlewareCtor);
+  return (req, res, next) => middleware.use(req, res, next);
+}
+
+function applyMiddleware(app: express.Application, config: RestControllerConfig): void {
+  const { prefix, middleware: middlewareCtors = [] } = config;
+  if (!middlewareCtors.length) {
+    return;
   }
+  const middlewareHandlers = middlewareCtors.map(middlewareCtor => getMiddleware(middlewareCtor));
+  app.all(prefix ? `/${prefix}/*` : '/*', ...middlewareHandlers);
 }
 
 function applyRequestMethods(
@@ -80,7 +87,7 @@ export function RestController(config: RestControllerConfig = {}): any {
     const app: express.Application = initExpressApplication();
     Container.getInstance().register<RestControllerInjecting>(target, target);
     const requestMethods = requestControllerMap[target.name] || [];
-    applyMiddleware(app, config.middleware || []);
+    applyMiddleware(app, config);
     applyRequestMethods(app, requestMethods, config);
   };
 }
