@@ -51,11 +51,11 @@ function getFunctionParameterByUsage(usage: Usage, options: RequestParams & Requ
   }
 }
 
-function getFunctionValue(
+async function getFunctionValue(
   descriptor: PropertyDescriptor,
   properties: TargetProperties,
   options: RequestParams & RequestProperties
-): any {
+): Promise<any> {
   const { target, propertyKey } = properties;
   const useBody: Usage[] = Reflect.getOwnMetadata(BODY_METADATA_KEY, target, propertyKey) || [];
   const useParams: Usage[] = Reflect.getOwnMetadata(PARAM_METADATA_KEY, target, propertyKey) || [];
@@ -73,7 +73,7 @@ function getFunctionValue(
   const functionParams = uses.map(usage => {
     return getFunctionParameterByUsage(usage, options);
   });
-  return descriptor.value(...functionParams);
+  return await descriptor.value(...functionParams);
 }
 
 export function OnRequest(path?: string, config: RequestMappingConfig = {}): any {
@@ -85,8 +85,8 @@ export function OnRequest(path?: string, config: RequestMappingConfig = {}): any
     const requestDefinition: RequestDefinition = {
       path,
       config,
-      onRequestFn: (properties, params) =>
-        getFunctionValue(descriptor, { target, propertyKey }, { ...properties, ...params })
+      onRequestFn: async (properties, params) =>
+        await getFunctionValue(descriptor, { target, propertyKey }, { ...properties, ...params })
     };
     if (requestControllerMap[target.constructor?.name]) {
       requestControllerMap[target.constructor.name].push(requestDefinition);

@@ -22,24 +22,20 @@ export interface RestControllerConfig {
 export interface RequestDefinition {
   path: string;
   config: RequestMappingConfig;
-  onRequestFn: (properties: RequestProperties, params: RequestParams) => any;
+  onRequestFn: (properties: RequestProperties, params: RequestParams) => Promise<any>;
 }
 
 function onConstructRequest(app: express.Application, definition: RequestDefinition): void {
   app[definition.config.method!](definition.path, (req, res) => {
-    try {
-      sendJson(definition, req, res);
-    } catch (e: unknown) {
-      catchError(res, e);
-    }
+    sendJson(definition, req, res).catch(e => catchError(res, e));
   });
 }
 
-function sendJson(definition: RequestDefinition, request: Request, response: Response): void {
+async function sendJson(definition: RequestDefinition, request: Request, response: Response): Promise<void> {
   const params = request.params;
   const body = request.body;
   const cookies = request.cookies;
-  const result = definition.onRequestFn({ request, response }, { body, params, cookies });
+  const result = await definition.onRequestFn({ request, response }, { body, params, cookies });
   response.json(result);
 }
 
@@ -60,7 +56,6 @@ function applyMiddleware(app: express.Application, middlewareCtors: ConstructorT
     const middleware = Container.getInstance().getService(middlewareCtor);
     app.use((req, res, next) => {
       middleware.use(req, res, next);
-      next();
     });
   }
 }

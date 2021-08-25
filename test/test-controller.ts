@@ -42,6 +42,11 @@ export class TestController {
   public routingError(): void {
     throw new RoutingError('This route is not for your eyes', { statusCode: 403 });
   }
+
+  @OnRequest()
+  public async promise(): Promise<string> {
+    return 'A promise is resolved';
+  }
 }
 
 export function Some(target: any, ...props: any[]): any {
