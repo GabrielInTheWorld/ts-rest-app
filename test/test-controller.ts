@@ -36,3 +36,14 @@ export class TestController {
 export function Some(target: any, ...props: any[]): any {
   console.log('some.target', target, target.prototype, props);
 }
+
+@RestController({
+  prefix: 'secure'
+})
+export class SecureTestController {
+  @OnPost()
+  public data(@Body() data: any): string {
+    console.log('secure data', data);
+    return 'Yeah, a secure data route!';
+  }
+}

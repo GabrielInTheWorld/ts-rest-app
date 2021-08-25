@@ -1,14 +1,14 @@
 import { Inject } from 'final-di';
 
 import { TestClass, TestInterface } from './test-class';
-import { TestController } from './test-controller';
+import { TestController, SecureTestController } from './test-controller';
 import { RestApplication } from '../src';
 
 class Server {
   @Inject(TestClass)
   private test: TestInterface;
   private application = new RestApplication({
-    controllers: [TestController],
+    controllers: [TestController, SecureTestController],
     port: 3000,
     requestHandlers: [
       req => {
