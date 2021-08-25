@@ -1,5 +1,8 @@
-import { Inject, Injectable } from './example';
-import { OnInit } from './example/interfaces/oninit';
+import { Inject, Injectable } from 'final-di';
+
+interface OnInit {
+  onInit(): void;
+}
 
 export abstract class TestInterface {}
 

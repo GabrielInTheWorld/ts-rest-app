@@ -1,5 +1,6 @@
 import { Request } from 'express';
 import { Injectable } from 'final-di';
+
 import { RestMiddleware } from '../src/interfaces/rest-middleware';
 
 @Injectable(TestMiddleware)

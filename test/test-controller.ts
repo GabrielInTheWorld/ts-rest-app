@@ -1,7 +1,9 @@
 import { Response } from 'express';
+
 import { OnPost, OnRequest, RestController } from '../src/annotations';
 import { Body, Res } from '../src/annotations/parameters';
 import { RoutingError } from '../src/exceptions/routing-error';
+
 import { TestMiddleware } from './test-middleware';
 
 @RestController({
