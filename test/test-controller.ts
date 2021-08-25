@@ -1,4 +1,5 @@
 import { OnPost, OnRequest, RestController } from '../src/annotations';
+import { Body } from '../src/annotations/parameters';
 import { RoutingError } from '../src/exceptions/routing-error';
 
 @RestController({
@@ -16,7 +17,7 @@ export class TestController {
   }
 
   @OnPost()
-  public data(data: any): string {
+  public data(@Body() data: any): string {
     console.log('data', data);
     return 'Hello not';
   }

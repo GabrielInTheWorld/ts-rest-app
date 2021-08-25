@@ -1,3 +1,4 @@
+import cookieParser from 'cookie-parser';
 import express, { Request, Response, NextFunction } from 'express';
 import { Inject } from 'final-di';
 
@@ -18,6 +19,7 @@ export class RestApplication {
     afterInit: (app: express.Application) => {
       app.use(express.json());
       app.use(express.urlencoded({ extended: true }));
+      app.use(cookieParser());
       app.use(RestApplication.handleRequest);
     }
   })

@@ -1,3 +1,4 @@
+import cookieParser from 'cookie-parser';
 import express, { Response } from 'express';
 import { Container } from 'final-di';
 import { RestApplication } from '../classes';
@@ -16,18 +17,19 @@ export interface RestControllerConfig {
   prefix?: string;
 }
 
-interface RequestDefinition {
+export interface RequestDefinition {
   path: string;
   config: RequestMappingConfig;
-  onRequestFn: (body: any, params: any) => any;
+  onRequestFn: (body: any, params: any, cookies: any) => any;
 }
 
 function onConstructRequest(app: express.Application, definition: RequestDefinition): void {
   app[definition.config.method!](definition.path, (req, res) => {
     const params = req.params;
     const body = req.body;
+    const cookies = req.cookies;
     try {
-      res.json(definition.onRequestFn(body, params));
+      res.json(definition.onRequestFn(body, params, cookies));
     } catch (e: unknown) {
       catchError(res, e);
     }
@@ -58,6 +60,7 @@ function initExpressApplication(): express.Application {
       afterInit: (app: express.Application) => {
         app.use(express.json());
         app.use(express.urlencoded({ extended: true }));
+        app.use(cookieParser());
         app.use(RestApplication.handleRequest);
       }
     };

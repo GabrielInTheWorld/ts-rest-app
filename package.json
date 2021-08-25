@@ -22,12 +22,14 @@
   "author": "GabrielInTheWorld",
   "license": "MIT",
   "dependencies": {
+    "cookie-parser": "^1.4.5",
     "express": "^4.17.1",
     "final-di": "^1.0.6",
     "reflect-metadata": "^0.1.13",
     "tslib": "^2.2.0"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.2",
     "@types/express": "^4.17.12",
     "@types/jest": "^26.0.23",
     "jest": "^27.0.1",
