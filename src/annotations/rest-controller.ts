@@ -1,10 +1,11 @@
-import cookieParser from 'cookie-parser';
 import express, { Request, Response } from 'express';
 import { Container } from 'final-di';
-import { RestApplication } from '../classes';
 
-import { ConstructorType, HttpMethod, INJECTION_TOKEN, RestControllerInjecting } from '../util';
+import { ConstructorType, HttpMethod, RestControllerInjecting } from '../util';
+import { initExpressApplication } from '../util/declarative-functions';
 import { BaseError, RoutingError } from '../exceptions';
+import { RestMiddleware } from '../interfaces/rest-middleware';
+import { RequestProperties, RequestParams } from './on-request';
 
 export const requestControllerMap: { [controllerName: string]: RequestDefinition[] } = {};
 
@@ -15,12 +16,13 @@ export interface RequestMappingConfig {
 export interface RestControllerConfig {
   defaultMethod?: HttpMethod;
   prefix?: string;
+  middleware?: ConstructorType<RestMiddleware>[];
 }
 
 export interface RequestDefinition {
   path: string;
   config: RequestMappingConfig;
-  onRequestFn: (body: any, params: any, cookies: any) => any;
+  onRequestFn: (properties: RequestProperties, params: RequestParams) => any;
 }
 
 function onConstructRequest(app: express.Application, definition: RequestDefinition): void {
@@ -33,12 +35,12 @@ function onConstructRequest(app: express.Application, definition: RequestDefinit
   });
 }
 
-function sendJson(definition: RequestDefinition, req: Request, res: Response): void {
-  const params = req.params;
-  const body = req.body;
-  const cookies = req.cookies;
-  const result = definition.onRequestFn(body, params, cookies);
-  res.json(result);
+function sendJson(definition: RequestDefinition, request: Request, response: Response): void {
+  const params = request.params;
+  const body = request.body;
+  const cookies = request.cookies;
+  const result = definition.onRequestFn({ request, response }, { body, params, cookies });
+  response.json(result);
 }
 
 function catchError(res: Response, e: unknown): void {
@@ -53,41 +55,37 @@ function catchError(res: Response, e: unknown): void {
   }
 }
 
-function initExpressApplication(): express.Application {
-  let app: express.Application;
-  try {
-    app = Container.getInstance().getService<express.Application>(INJECTION_TOKEN);
-  } catch (e) {
-    app = express();
-    const injectionToken = {
-      name: INJECTION_TOKEN,
-      useValue: app,
-      afterInit: (app: express.Application) => {
-        app.use(express.json());
-        app.use(express.urlencoded({ extended: true }));
-        app.use(cookieParser());
-        app.use(RestApplication.handleRequest);
-      }
-    };
-    Container.getInstance().register(injectionToken, injectionToken as any);
+function applyMiddleware(app: express.Application, middlewareCtors: ConstructorType<RestMiddleware>[]): void {
+  for (const middlewareCtor of middlewareCtors) {
+    const middleware = Container.getInstance().getService(middlewareCtor);
+    app.use((req, res, next) => {
+      middleware.use(req, res, next);
+      next();
+    });
   }
-  return app;
+}
+
+function applyRequestMethods(
+  app: express.Application,
+  requestMethods: RequestDefinition[],
+  config: RestControllerConfig
+): void {
+  const defaultMethod = config.defaultMethod || 'get';
+  for (const method of requestMethods) {
+    method.config.method = method.config.method ?? defaultMethod;
+    method.path = config.prefix
+      ? `/${config.prefix}/${method.path.startsWith('/') ? method.path.slice(1) : method.path}`
+      : method.path;
+    onConstructRequest(app, method);
+  }
 }
 
 export function RestController(config: RestControllerConfig = {}): any {
-  return (target: ConstructorType, ...args: any[]) => {
-    const defaultMethod = config.defaultMethod || 'get';
+  return (target: ConstructorType) => {
     const app: express.Application = initExpressApplication();
-    (target as any).defaultMethod = defaultMethod;
-    (target as any).app = app;
     Container.getInstance().register<RestControllerInjecting>(target, target);
     const requestMethods = requestControllerMap[target.name] || [];
-    for (const method of requestMethods) {
-      method.config.method = method.config.method ?? defaultMethod;
-      method.path = config.prefix
-        ? `/${config.prefix}/${method.path.startsWith('/') ? method.path.slice(1) : method.path}`
-        : method.path;
-      onConstructRequest(app, method);
-    }
+    applyMiddleware(app, config.middleware || []);
+    applyRequestMethods(app, requestMethods, config);
   };
 }

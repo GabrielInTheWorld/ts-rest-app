@@ -1,9 +1,12 @@
+import { Response } from 'express';
 import { OnPost, OnRequest, RestController } from '../src/annotations';
-import { Body } from '../src/annotations/parameters';
+import { Body, Res } from '../src/annotations/parameters';
 import { RoutingError } from '../src/exceptions/routing-error';
+import { TestMiddleware } from './test-middleware';
 
 @RestController({
-  defaultMethod: 'get'
+  defaultMethod: 'get',
+  middleware: [TestMiddleware]
 })
 export class TestController {
   public constructor() {
@@ -20,6 +23,12 @@ export class TestController {
   public data(@Body('message') data: any): string {
     console.log('data', data);
     return 'Hello not';
+  }
+
+  @OnRequest()
+  public info(@Res() res: Response): string {
+    res.cookie('a-cookie', 'hello_world');
+    return 'This is an info route';
   }
 
   @OnRequest()
