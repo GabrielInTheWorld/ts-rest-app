@@ -1,4 +1,4 @@
-import express, { Handler, NextFunction, Request, Response } from 'express';
+import express, { Handler, Request, Response } from 'express';
 import { Container } from 'final-di';
 
 import { ConstructorType, HttpMethod, RestControllerInjecting } from '../util';
@@ -54,7 +54,7 @@ function catchError(res: Response, e: unknown): void {
 }
 
 function getMiddleware(middlewareCtor: ConstructorType<RestMiddleware>): Handler {
-  const middleware = Container.getInstance().getService(middlewareCtor);
+  const middleware = Container.get(middlewareCtor);
   return (req, res, next) => middleware.use(req, res, next);
 }
 
@@ -85,7 +85,7 @@ function applyRequestMethods(
 export function RestController(config: RestControllerConfig = {}): any {
   return (target: ConstructorType) => {
     const app: express.Application = initExpressApplication();
-    Container.getInstance().register<RestControllerInjecting>(target, target);
+    Container.register<RestControllerInjecting>(target, target);
     const requestMethods = requestControllerMap[target.name] || [];
     applyMiddleware(app, config);
     applyRequestMethods(app, requestMethods, config);

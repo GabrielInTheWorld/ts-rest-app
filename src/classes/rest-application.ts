@@ -52,7 +52,7 @@ export class RestApplication {
   }
 
   public static handleRequest(req: Request, res: Response, next: NextFunction): void {
-    RestApplication.requestHandlers.forEach(handler => handler(req, res));
+    RestApplication.requestHandlers.forEach(handler => handler(req, res, next));
     next();
   }
 }

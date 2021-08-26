@@ -1,4 +1,4 @@
-import { Inject, Injectable } from 'final-di';
+import { Inject } from 'final-di';
 
 interface OnInit {
   onInit(): void;
@@ -10,7 +10,6 @@ export class TestClass2 {
   world = 'world';
 }
 
-@Injectable(TestInterface)
 export class TestClass implements OnInit {
   @Inject(TestClass2)
   private readonly class2: TestClass2;

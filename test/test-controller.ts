@@ -23,7 +23,7 @@ export class TestController {
   @OnPost()
   public data(@Body('message') data: any): string {
     console.log('data', data);
-    return 'Hello not';
+    return data;
   }
 
   @OnRequest()

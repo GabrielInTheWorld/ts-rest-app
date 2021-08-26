@@ -8,7 +8,7 @@ import { RestApplication } from '../classes/rest-application';
 export function initExpressApplication(): express.Application {
   let app: express.Application;
   try {
-    app = Container.getInstance().getService<express.Application>(INJECTION_TOKEN);
+    app = Container.get<express.Application>(INJECTION_TOKEN);
   } catch (e) {
     app = express();
     const injectionToken = {
@@ -21,7 +21,7 @@ export function initExpressApplication(): express.Application {
         app.use(RestApplication.handleRequest);
       }
     };
-    Container.getInstance().register(injectionToken, injectionToken as any);
+    Container.register(injectionToken, injectionToken as any);
   }
   return app;
 }

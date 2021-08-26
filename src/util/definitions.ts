@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
 export interface ConstructorType<T = any> {
   new (...args: any[]): T;
@@ -12,4 +12,4 @@ export interface RestControllerInjecting<T = any> extends ConstructorType<T> {
   defaultMethod: HttpMethod;
 }
 
-export type RequestHandlerFn = (req: Request, res?: Response) => void;
+export type RequestHandlerFn = (req: Request, res: Response, next: NextFunction) => void;
