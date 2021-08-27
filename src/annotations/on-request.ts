@@ -82,6 +82,10 @@ export function OnRequest(path?: string, config: RequestMappingConfig = {}): any
     path = path ?? `/${propertyKey}`;
     path = path.startsWith('/') ? path : `/${path}`;
 
+    const method = descriptor.value;
+    descriptor.value = function (...args: any[]) {
+      return method.apply(target, args);
+    };
     const requestDefinition: RequestDefinition = {
       path,
       config,

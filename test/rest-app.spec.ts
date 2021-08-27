@@ -23,3 +23,14 @@ test('POST secure/data', async () => {
   const { body } = await makeRequest(POST, 'secure/data', DATA);
   expect(body).toBe('Yeah, a secure data route!');
 });
+
+test('POST login', async () => {
+  const loginData = { username: 'hello', password: 'world' };
+  const { body } = await makeRequest(POST, 'login', loginData);
+  expect(body).toBe(`${loginData.username}_${loginData.password}`);
+});
+
+test('GET promise', async () => {
+  const { body } = await makeRequest(GET, 'promise');
+  expect(body).toBe('A promise is resolved');
+});

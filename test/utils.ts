@@ -1,6 +1,7 @@
 import request from 'superagent';
 
 export const PORT = 3000;
+export const TEST_WORLD = 'test_world';
 
 const agent = request.agent();
 

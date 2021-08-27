@@ -1,15 +1,23 @@
 import { Response } from 'express';
+import { Inject } from 'final-di';
 
 import { OnGet, OnPost, OnRequest, RestController } from '../src/annotations';
 import { Body, Res } from '../src/annotations/parameters';
 import { RoutingError } from '../src/exceptions/routing-error';
 
 import { TestMiddleware } from './test-middleware';
+import { TEST_WORLD } from './utils';
+import { TestHandler } from './test-handler';
 
 @RestController({
   defaultMethod: 'get'
 })
 export class TestController {
+  @Inject(TestHandler)
+  private readonly testHandler: TestHandler;
+
+  private readonly TEST_WORLD = TEST_WORLD;
+
   public constructor() {
     console.log('TestController');
   }
@@ -45,6 +53,17 @@ export class TestController {
   @OnRequest('promise', { middleware: [TestMiddleware] })
   public async promise(): Promise<string> {
     return 'A promise is resolved';
+  }
+
+  @OnGet('test-world')
+  public testWorld(): string {
+    return this.TEST_WORLD;
+  }
+
+  @OnPost()
+  public login(@Body('username') username: string, @Body('password') password: string): string {
+    console.log('testHandler', this.testHandler);
+    return this.testHandler.login(username, password);
   }
 }
 
