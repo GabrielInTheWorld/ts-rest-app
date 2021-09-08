@@ -18,19 +18,15 @@ export class TestController {
 
   private readonly TEST_WORLD = TEST_WORLD;
 
-  public constructor() {
-    console.log('TestController');
-  }
+  public constructor() {}
 
   @OnRequest()
   public index(): string {
-    console.log('TestController:index');
     return 'Hello World!';
   }
 
   @OnPost()
-  public data(@Body('message') data: any): string {
-    console.log('data', data);
+  public data(@Body('message') data: string): string {
     return data;
   }
 
@@ -65,10 +61,21 @@ export class TestController {
     console.log('testHandler', this.testHandler);
     return this.testHandler.login(username, password);
   }
-}
 
-export function Some(target: any, ...props: any[]): any {
-  console.log('some.target', target, target.prototype, props);
+  @OnGet('on-error')
+  public onError(): void {
+    this.testHandler.throwException();
+  }
+
+  @OnGet('on-deep-error')
+  public onDeepError(): void {
+    this.testHandler.throwDeepException();
+  }
+
+  @OnPost('deep-promise')
+  public async deepPromise(@Body('username') username: string, @Body('password') password: string): Promise<string[]> {
+    return [await this.testHandler.lazyLogin(username, password)];
+  }
 }
 
 @RestController({
@@ -77,8 +84,7 @@ export function Some(target: any, ...props: any[]): any {
 })
 export class SecureTestController {
   @OnPost()
-  public data(@Body() data: any): string {
-    console.log('secure data', data);
+  public data(@Body() _data: any): string {
     return 'Yeah, a secure data route!';
   }
 

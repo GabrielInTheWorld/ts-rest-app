@@ -43,6 +43,7 @@ async function sendJson(definition: RequestDefinition, request: Request, respons
 
 function catchError(res: Response, e: unknown): void {
   console.log('Stacktrace:\r\n', e);
+  console.log('Instance of BaseError', (e as any).constructor.name, e instanceof BaseError);
   if (e instanceof RoutingError) {
     res.status(e.statusCode).json({ message: e.message ?? 'URL not found' });
   } else if (e instanceof BaseError) {
