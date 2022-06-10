@@ -1,8 +1,9 @@
 import cookieParser from 'cookie-parser';
 import express, { Request, Response, NextFunction } from 'express';
-import { Inject } from 'final-di';
+import { Container, Inject } from 'final-di';
 
-import { ConstructorType, INJECTION_TOKEN, RequestHandlerFn } from '../util';
+import { ConstructorType, ErrorHandlerFn, INJECTION_TOKEN, RequestHandlerFn } from '../util';
+import { Logger, LoggerConfiguration } from './logger';
 
 export interface RestApplicationConfig {
   controllers: ConstructorType[];
@@ -10,6 +11,8 @@ export interface RestApplicationConfig {
   shouldImmediatelyStart?: boolean;
   name?: string;
   requestHandlers?: RequestHandlerFn[];
+  errorHandlers?: ErrorHandlerFn[];
+  logger?: LoggerConfiguration;
 }
 
 export class RestApplication {
@@ -23,36 +26,44 @@ export class RestApplication {
       app.use(RestApplication.handleRequest);
     }
   })
-  private readonly app: express.Application;
-  private config: RestApplicationConfig;
-  private static requestHandlers: RequestHandlerFn[] = [];
+  private readonly _app: express.Application;
+  private readonly _config: RestApplicationConfig;
+  private static _requestHandlers: RequestHandlerFn[] = [];
+  private static _errorHandlers: ErrorHandlerFn[] = [];
 
   public constructor(config: RestApplicationConfig) {
-    this.config = config;
-    RestApplication.requestHandlers = config.requestHandlers || [];
+    this._config = config;
+    RestApplication._requestHandlers = config.requestHandlers || [];
+    RestApplication._errorHandlers = config.errorHandlers || [];
+    RestApplication.registerErrorHandlers();
+    Logger.construct(config.logger);
     if (config.shouldImmediatelyStart) {
       this.start();
     }
   }
 
   public start(): void {
-    const port = this.config.port || 80;
-    const name = this.config.name || 'This server';
-    this.app.listen(port, () => {
-      console.log(`${name} is listen on port ${port}.`);
+    const port = this._config.port || 80;
+    const name = this._config.name || 'This server';
+    this._app.listen(port, () => {
+      Logger.info(`${name} is listening on port ${port}.`);
     });
   }
 
   public getApp(): express.Application {
-    return this.app;
+    return this._app;
   }
 
   public getConfig(): Readonly<RestApplicationConfig> {
-    return this.config;
+    return this._config;
   }
 
   public static handleRequest(req: Request, res: Response, next: NextFunction): void {
-    RestApplication.requestHandlers.forEach(handler => handler(req, res, next));
+    RestApplication._requestHandlers.forEach(handler => handler(req, res, next));
     next();
+  }
+
+  private static registerErrorHandlers(): void {
+    Container.register(`ErrorToken`, this._errorHandlers);
   }
 }

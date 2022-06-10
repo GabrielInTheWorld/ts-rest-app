@@ -6,6 +6,7 @@ import { initExpressApplication } from '../util/declarative-functions';
 import { BaseError, RoutingError } from '../exceptions';
 import { RestMiddleware } from '../interfaces/rest-middleware';
 import { RequestProperties, RequestParams } from './on-request';
+import { ErrorHandlerFn } from '../util/definitions';
 
 export const requestControllerMap: { [controllerName: string]: RequestDefinition[] } = {};
 
@@ -29,7 +30,7 @@ export interface RequestDefinition {
 function onConstructRequest(app: express.Application, definition: RequestDefinition): void {
   const middlewareHandlers = (definition.config.middleware || []).map(middlewareCtor => getMiddleware(middlewareCtor));
   app[definition.config.method!](definition.path, ...middlewareHandlers, (req, res) => {
-    sendJson(definition, req, res).catch(e => catchError(res, e));
+    sendJson(definition, req, res).catch(e => handleError(res, e));
   });
 }
 
@@ -37,13 +38,18 @@ async function sendJson(definition: RequestDefinition, request: Request, respons
   const params = request.params;
   const body = request.body;
   const cookies = request.cookies;
-  const result = await definition.onRequestFn({ request, response }, { body, params, cookies });
+  const headers = request.headers
+  const result = await definition.onRequestFn({ request, response }, { body, params, cookies, headers });
   response.json(result);
 }
 
-function catchError(res: Response, e: unknown): void {
-  console.log('Stacktrace:\r\n', e);
-  console.log('Instance of BaseError', (e as any).constructor.name, e instanceof BaseError);
+function handleErrorStacktrace(e: unknown): void {
+  const errorHandlers = Container.get<ErrorHandlerFn[]>(`ErrorToken`);
+  errorHandlers.forEach(handler => handler(e));
+}
+
+function handleError(res: Response, e: unknown): void {
+  handleErrorStacktrace(e);
   if (e instanceof RoutingError) {
     res.status(e.statusCode).json({ message: e.message ?? 'URL not found' });
   } else if (e instanceof BaseError) {

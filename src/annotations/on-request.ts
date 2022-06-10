@@ -8,6 +8,7 @@ import {
   RESPONSE_METADATA_KEY
 } from './parameters';
 import { Request, Response } from 'express';
+import { HEADER_METADATA_KEY } from './parameters';
 
 interface TargetProperties {
   target: ConstructorType;
@@ -18,6 +19,7 @@ export interface RequestParams {
   body: any;
   cookies: any;
   params: any;
+  headers: any
 }
 
 export interface RequestProperties {
@@ -28,11 +30,11 @@ export interface RequestProperties {
 interface Usage {
   name: string;
   parameterIndex: number;
-  type: 'body' | 'cookie' | 'param' | 'response' | 'request';
+  type: 'body' | 'cookie' | 'param' | 'header' | 'response' | 'request';
 }
 
 function getFunctionParameterByUsage(usage: Usage, options: RequestParams & RequestProperties): any {
-  const { body, cookies, params, request, response } = options;
+  const { body, cookies, params, headers, request, response } = options;
   switch (usage.type) {
     case 'body':
       if (usage.name) {
@@ -44,6 +46,8 @@ function getFunctionParameterByUsage(usage: Usage, options: RequestParams & Requ
       return cookies[usage.name];
     case 'param':
       return params[usage.name];
+    case 'header':
+      return headers[usage.name]
     case 'request':
       return request;
     case 'response':
@@ -60,9 +64,10 @@ async function getFunctionValue(
   const useBody: Usage[] = Reflect.getOwnMetadata(BODY_METADATA_KEY, target, propertyKey) || [];
   const useParams: Usage[] = Reflect.getOwnMetadata(PARAM_METADATA_KEY, target, propertyKey) || [];
   const useCookies: Usage[] = Reflect.getOwnMetadata(COOKIE_METADATA_KEY, target, propertyKey) || [];
+  const useHeaders: Usage[] = Reflect.getOwnMetadata(HEADER_METADATA_KEY, target, propertyKey) || []
   const useRequest: Usage = Reflect.getOwnMetadata(REQUEST_METADATA_KEY, target, propertyKey);
   const useResponse: Usage = Reflect.getOwnMetadata(RESPONSE_METADATA_KEY, target, propertyKey);
-  const uses: Usage[] = useParams.concat(useCookies).concat(useBody);
+  const uses: Usage[] = useParams.concat(useCookies, useHeaders, useBody);
   if (useRequest) {
     uses.push(useRequest);
   }

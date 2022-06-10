@@ -3,12 +3,14 @@ import { ConstructorType } from '../util';
 export const BODY_METADATA_KEY = 'body_metadata_key';
 export const PARAM_METADATA_KEY = 'param_metadata_key';
 export const COOKIE_METADATA_KEY = 'cookie_metadata_key';
+export const HEADER_METADATA_KEY = 'header_metadata_key'
 export const REQUEST_METADATA_KEY = 'request_metadata_key';
 export const RESPONSE_METADATA_KEY = 'response_metadata_key';
 
 export const TYPE_BODY = 'body';
-export const TYPE_COOKIE = 'cookie';
 export const TYPE_PARAM = 'param';
+export const TYPE_COOKIE = 'cookie';
+export const TYPE_HEADER = 'header'
 export const TYPE_REQUEST = 'request';
 export const TYPE_RESPONSE = 'response';
 
@@ -34,6 +36,14 @@ export function Cookie(name: string): any {
     existingCookies.push({ name, parameterIndex, type: TYPE_COOKIE });
     Reflect.defineMetadata(COOKIE_METADATA_KEY, existingCookies, target, propertyKey);
   };
+}
+
+export function Header(name: string): any {
+  return (target: ConstructorType, propertyKey: string, parameterIndex: number): void => {
+    const existingHeaders = Reflect.getOwnMetadata(HEADER_METADATA_KEY, target, propertyKey) || []
+    existingHeaders.push({name, parameterIndex, type: TYPE_HEADER})
+    Reflect.defineMetadata(HEADER_METADATA_KEY, existingHeaders, target, propertyKey)
+  }
 }
 
 export function Req(): any {

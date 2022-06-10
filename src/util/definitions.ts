@@ -13,3 +13,5 @@ export interface RestControllerInjecting<T = any> extends ConstructorType<T> {
 }
 
 export type RequestHandlerFn = (req: Request, res: Response, next: NextFunction) => void;
+
+export type ErrorHandlerFn = (error: any) => void;

@@ -18,7 +18,13 @@ class Server {
       () => {
         console.log('This one is called although next is not called');
       }
-    ]
+    ],
+    errorHandlers: [error => console.log(`Error received in errorhandler:`, error)],
+    logger: {
+      logFn: (...args) => {
+        console.log(`[${new Date().toISOString()}]:`, ...args);
+      }
+    }
   });
 
   public start(): void {
